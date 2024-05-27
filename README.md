@@ -33,6 +33,7 @@ The latest source code is available at
 * Votes that can be taken by members within the committee
 * Disqus commenting
 
+# Delete me
 
 ## Project activity
 
