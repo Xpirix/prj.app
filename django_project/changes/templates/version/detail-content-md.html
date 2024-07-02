@@ -10,10 +10,6 @@
          src="{{ version.image_file.url }}"/>
 {% endif %}
 
-{% if version.release_date %}
-    Release date: {{ version.release_date }}
-{% endif %}
-
 {% if version.description %}
         {{ version.description|base_markdown }}
 {% endif %}
