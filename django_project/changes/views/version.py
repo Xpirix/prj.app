@@ -822,7 +822,7 @@ class VersionDownloadMd(VersionMixin, DetailView):
                     raise Http404('Sorry! We could not find your version!')
             else:
                 raise Http404('Sorry! We could not find your version!')
-        return self.queryset    
+        return self.queryset
 
 
 class VersionDownloadGnu(VersionMixin, DetailView):
