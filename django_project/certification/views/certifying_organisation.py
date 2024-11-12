@@ -1150,4 +1150,3 @@ def reject_certifying_organisation(request, **kwargs):
         return HttpResponseRedirect(url)
     else:
         return HttpResponse('Please use GET method.')
-
