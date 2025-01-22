@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.http import (
     Http404, HttpResponse, HttpResponseRedirect, FileResponse,
-    HttpResponseForbidden
+    HttpResponseForbidden,
 )
 from django.views.generic import (
     CreateView, DetailView, TemplateView, DeleteView)
@@ -245,7 +245,9 @@ def generate_pdf(
         pathname, project, course, attendee, certificate, current_site,
         wording='Has attended and completed the course:'):
     """Create the PDF object, using the response object as its file."""
-
+    
+    if not certificate.is_paid:
+        return
     # Register new font
     try:
         font_folder = os.path.join(
@@ -487,6 +489,8 @@ def download_certificates_zip(request, **kwargs):
 
     filenames = []
     for certificate in certificates:
+        if not certificate.is_paid:
+            continue
         pdf_file = certificate_pdf_view(
             request, pk=certificate.attendee.pk, project_slug=project_slug,
             course_slug=course_slug, organisation_slug=organisation_slug)
@@ -731,6 +735,12 @@ def generate_all_certificate(request, **kwargs):
     project = Project.objects.get(slug=project_slug)
     certifying_organisation = \
         CertifyingOrganisation.objects.get(slug=organisation_slug)
+    
+    if certifying_organisation.organisation_credits <= 0:
+        return HttpResponseForbidden(
+            'You do not have enough credits to generate certificates'
+        )
+    
 
     # Checking user permissions.
     if request.user.is_staff or request.user == project.owner or \
