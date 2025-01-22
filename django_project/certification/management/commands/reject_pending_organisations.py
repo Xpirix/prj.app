@@ -5,15 +5,6 @@ from ...models.certifying_organisation import CertifyingOrganisation
 from ...models.status import Status
 from ...views import send_rejection_email
 
-# coding=utf-8
-"""Command to reject pending
-certifying organisations that were
-created more than one year ago.
-This command sets the status
-of these organisations to Rejected.
-
-"""
-
 
 class Command(BaseCommand):
     """Reject pending certifying organisations
