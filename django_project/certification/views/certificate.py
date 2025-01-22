@@ -245,7 +245,7 @@ def generate_pdf(
         pathname, project, course, attendee, certificate, current_site,
         wording='Has attended and completed the course:'):
     """Create the PDF object, using the response object as its file."""
-    
+
     if not certificate.is_paid:
         return
     # Register new font
@@ -735,12 +735,11 @@ def generate_all_certificate(request, **kwargs):
     project = Project.objects.get(slug=project_slug)
     certifying_organisation = \
         CertifyingOrganisation.objects.get(slug=organisation_slug)
-    
+
     if certifying_organisation.organisation_credits <= 0:
         return HttpResponseForbidden(
             'You do not have enough credits to generate certificates'
         )
-    
 
     # Checking user permissions.
     if request.user.is_staff or request.user == project.owner or \
