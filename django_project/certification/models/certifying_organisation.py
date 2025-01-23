@@ -51,8 +51,7 @@ class ApprovedCertifyingOrganisationManager(models.Manager):
         return super(
             ApprovedCertifyingOrganisationManager, self).get_queryset().filter(
                 approved=True,
-                is_archived=False
-            )
+                is_archived=False)
 
 
 class UnapprovedCertifyingOrganisationManager(models.Manager):
@@ -67,10 +66,11 @@ class UnapprovedCertifyingOrganisationManager(models.Manager):
         return super(
             UnapprovedCertifyingOrganisationManager, self).get_queryset(
         ).filter(
-            approved=False, 
+            approved=False,
             rejected=False,
             is_archived=False
         )
+
 
 class ArchivedCertifyingOrganisationManager(models.Manager):
     """Custom training centre manager.
@@ -84,6 +84,7 @@ class ArchivedCertifyingOrganisationManager(models.Manager):
         return super(
             ArchivedCertifyingOrganisationManager, self).get_queryset(
         ).filter(is_archived=True)
+
 
 def validate_email_address(value):
     try:

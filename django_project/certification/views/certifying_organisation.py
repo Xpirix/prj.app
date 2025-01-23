@@ -425,6 +425,7 @@ class CertifyingOrganisationDetailView(
                 raise Http404('Sorry! We could not find '
                               'your Certifying Organisation!')
 
+
 class CertifyingOrganisationArchivingView(
     LoginRequiredMixin,
     CertifyingOrganisationMixin,
@@ -458,7 +459,7 @@ class CertifyingOrganisationArchivingView(
                 'toogle_archive': toogle_archive,
                 'certifyingorganisation': CertifyingOrganisation.objects.get(
                     slug=kwargs.get('slug', None))
-        })
+            })
 
     def post(self, request, *args, **kwargs):
         """Archive/Unarchive Certifying Organisation.
@@ -479,7 +480,8 @@ class CertifyingOrganisationArchivingView(
         certifying_organisation = CertifyingOrganisation.objects.get(
             slug=kwargs.get('slug', None))
         toogle_archive = kwargs.get('toogle_archive', 'unarchive')
-        certifying_organisation.is_archived = str(toogle_archive).lower() == 'archive'
+        is_archived = str(toogle_archive).lower() == 'archive'
+        certifying_organisation.is_archived = is_archived
         certifying_organisation.save()
 
         return HttpResponseRedirect(
@@ -487,6 +489,7 @@ class CertifyingOrganisationArchivingView(
                 'project_slug': certifying_organisation.project.slug
             })
         )
+
 
 # noinspection PyAttributeOutsideInit
 class CertifyingOrganisationDeleteView(
@@ -1142,7 +1145,7 @@ class ArchivedCertifyingOrganisationListView(
         super(ArchivedCertifyingOrganisationListView, self).__init__()
         self.project = None
         self.project_slug = None
-    
+
     def get_context_data(self, **kwargs):
         """Get the context data which is passed to a template.
 
@@ -1162,7 +1165,7 @@ class ArchivedCertifyingOrganisationListView(
                 Project.objects.get(slug=self.project_slug)
             context['project'] = context['the_project']
         return context
-    
+
     def get_queryset(self):
         """Get the queryset for this view.
 
@@ -1193,6 +1196,7 @@ class ArchivedCertifyingOrganisationListView(
                 raise Http404(
                     'Sorry! We could not find your Certifying Organisation!')
         return self.queryset
+
 
 class AboutView(TemplateView):
     template_name = 'about.html'
