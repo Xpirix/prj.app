@@ -864,8 +864,14 @@ class CertifyingOrganisationJson(BaseDatatableView):
             self.request.GET.get('approved', 'False'))
         rejected = self._validate_param(
             self.request.GET.get('rejected', 'False'))
+        is_archived = self._validate_param(
+            self.request.GET.get('is_archived', 'False'))
 
-        qs = qs.filter(rejected=rejected, approved=approved)
+        qs = qs.filter(
+            rejected=rejected,
+            approved=approved,
+            is_archived=is_archived
+        )
 
         if approved:
             qs = qs.filter(enabled=True)
@@ -1047,6 +1053,80 @@ class ApproveCertifyingOrganisationView(
             'project_slug': project_slug
         })
 
+
+class ArchivedCertifyingOrganisationListView(
+    LoginRequiredMixin,
+    CertifyingOrganisationMixin,
+    PaginationMixin,
+    ListView):
+    """List view for archived certifying organisation."""
+
+    context_object_name = 'certifyingorganisations'
+    template_name = 'certifying_organisation/archived-list.html'
+    paginate_by = 10
+
+    def __init__(self):
+        """
+        We overload __init__ in order to declare self.project and
+        self.project_slug. Both are then defined in self.get_queryset
+        which is the first method called. This means we can then reuse the
+        values in self.get_context_data.
+        """
+
+        super(ArchivedCertifyingOrganisationListView, self).__init__()
+        self.project = None
+        self.project_slug = None
+    
+    def get_context_data(self, **kwargs):
+        """Get the context data which is passed to a template.
+
+        :param kwargs: Any arguments to pass to the superclass.
+        :type kwargs: dict
+
+        :returns: Context data which will be passed to the template.
+        :rtype: dict
+        """
+
+        context = super(ArchivedCertifyingOrganisationListView, self) \
+            .get_context_data(**kwargs)
+        context['num_certifyingorganisations'] = self.get_queryset().count()
+        context['project_slug'] = self.project_slug
+        if self.project_slug:
+            context['the_project'] = \
+                Project.objects.get(slug=self.project_slug)
+            context['project'] = context['the_project']
+        return context
+    
+    def get_queryset(self):
+        """Get the queryset for this view.
+
+        :returns: A queryset which is filtered to only show archived
+        Certifying Organisation.
+        :rtype: QuerySet
+        :raises: Http404
+        """
+
+        if self.queryset is None:
+            self.project_slug = self.kwargs.get('project_slug', None)
+            if self.project_slug:
+                self.project = Project.objects.get(slug=self.project_slug)
+                if self.request.user.is_staff:
+                    queryset = \
+                        CertifyingOrganisation.archived_objects.filter(
+                            project=self.project)
+                else:
+                    queryset = \
+                        CertifyingOrganisation.archived_objects.filter(
+                            Q(project=self.project) &
+                            (Q(project__owner=self.request.user) |
+                             Q(organisation_owners=self.request.user) |
+                             Q(project__certification_managers=
+                               self.request.user))).distinct()
+                return queryset
+            else:
+                raise Http404(
+                    'Sorry! We could not find your Certifying Organisation!')
+        return self.queryset
 
 class AboutView(TemplateView):
     template_name = 'about.html'
