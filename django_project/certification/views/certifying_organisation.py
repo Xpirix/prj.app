@@ -21,6 +21,7 @@ from django.views.generic import (
     RedirectView,
     TemplateView)
 from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import render
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 from braces.views import LoginRequiredMixin, UserPassesTestMixin
@@ -424,6 +425,68 @@ class CertifyingOrganisationDetailView(
                 raise Http404('Sorry! We could not find '
                               'your Certifying Organisation!')
 
+class CertifyingOrganisationArchivingView(
+    LoginRequiredMixin,
+    CertifyingOrganisationMixin,
+    APIView):
+    """Archive/Unarchive Certifying Organisation."""
+
+    context_object_name = 'certifyingorganisation'
+    template_name = 'certifying_organisation/toogle_archive.html'
+
+    def get(self, request, *args, **kwargs):
+        """Get the project_slug from the URL and define the Project.
+
+        :param request: HTTP request object
+        :type request: HttpRequest
+
+        :param args: Positional arguments
+        :type args: tuple
+
+        :param kwargs: Keyword arguments
+        :type kwargs: dict
+
+        :returns: Unaltered request object
+        :rtype: HttpResponse
+        """
+
+        self.project_slug = kwargs.get('project_slug', None)
+        self.project = Project.objects.get(slug=self.project_slug)
+        toogle_archive = kwargs.get('toogle_archive', 'unarchive')
+        return render(
+            request, self.template_name, {
+                'toogle_archive': toogle_archive,
+                'certifyingorganisation': CertifyingOrganisation.objects.get(
+                    slug=kwargs.get('slug', None))
+        })
+
+    def post(self, request, *args, **kwargs):
+        """Archive/Unarchive Certifying Organisation.
+
+        :param request: HTTP request object
+        :type request: HttpRequest
+
+        :param args: Positional arguments
+        :type args: tuple
+
+        :param kwargs: Keyword arguments
+        :type kwargs: dict
+
+        :returns: HTTP response object
+        :rtype: HttpResponse
+        """
+
+        certifying_organisation = CertifyingOrganisation.objects.get(
+            slug=kwargs.get('slug', None))
+        toogle_archive = kwargs.get('toogle_archive', 'unarchive')
+        certifying_organisation.is_archived = str(toogle_archive).lower() == 'archive'
+        certifying_organisation.save()
+
+        return HttpResponseRedirect(
+            reverse('certifyingorganisation-list', kwargs={
+                'project_slug': certifying_organisation.project.slug
+            })
+        )
 
 # noinspection PyAttributeOutsideInit
 class CertifyingOrganisationDeleteView(
@@ -867,19 +930,22 @@ class CertifyingOrganisationJson(BaseDatatableView):
         is_archived = self._validate_param(
             self.request.GET.get('is_archived', 'False'))
 
-        qs = qs.filter(
-            rejected=rejected,
-            approved=approved,
-            is_archived=is_archived
-        )
+        if not is_archived:
+            qs = qs.filter(
+                rejected=rejected,
+                approved=approved,
+                is_archived=is_archived
+            )
 
-        if approved:
-            qs = qs.filter(enabled=True)
-        else:
-            if not ready:
-                qs = qs.filter(status__name__icontains='pending')
+            if approved:
+                qs = qs.filter(enabled=True)
             else:
-                qs = qs.exclude(status__name__icontains='pending')
+                if not ready:
+                    qs = qs.filter(status__name__icontains='pending')
+                else:
+                    qs = qs.exclude(status__name__icontains='pending')
+        else:
+            qs = qs.filter(is_archived=is_archived)
 
         if search:
             qs = qs.filter(name__istartswith=search)
