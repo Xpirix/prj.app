@@ -142,7 +142,7 @@ urlpatterns = [
         view=CertifyingOrganisationDetailView.as_view(),
         name='certifyingorganisation-detail'),
     url(regex='^(?P<project_slug>[\w-]+)/certifyingorganisation/'
-              '(?P<slug>[\w-]+)/'
+              '(?P<slug>[\w-]+)/archiving/'
               '(?P<toogle_archive>[\w-]+)/$',
         view=CertifyingOrganisationArchivingView.as_view(),
         name='certifyingorganisation-toogle-archive'),
