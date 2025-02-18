@@ -23,7 +23,10 @@ from django.views.generic import (
 from django.http import HttpResponseRedirect, Http404
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
-from braces.views import LoginRequiredMixin, UserPassesTestMixin, StaffuserRequiredMixin
+from braces.views import (
+    LoginRequiredMixin,
+    UserPassesTestMixin,
+    StaffuserRequiredMixin)
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from django.contrib.sessions.models import Session
 from pure_pagination.mixins import PaginationMixin
@@ -99,7 +102,10 @@ class CustomStaffuserRequiredMixin(StaffuserRequiredMixin):
                 CustomStaffuserRequiredMixin, self).no_permissions_fail(
                 request)
 
-        return HttpResponse('Sorry! You do not have permission to perform this action.', status=403)
+        return HttpResponse(
+            'Sorry! You do not have permission to perform this action.',
+            status=403
+        )
 
 
 class CertifyingOrganisationMixin(object):

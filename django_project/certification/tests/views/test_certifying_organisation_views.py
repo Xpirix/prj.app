@@ -48,7 +48,7 @@ class TestCertifyingOrganisationView(TestCase):
             'password': 'password',
             'is_staff': False
         })
-        
+
         self.simple_user.set_password('password')
         self.simple_user.save()
         self.project = ProjectF.create()
