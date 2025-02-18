@@ -40,7 +40,6 @@ from ..models import (
 from ..forms import CertifyingOrganisationForm
 from certification.utilities import check_slug
 from ..serializers.checklist_serializer import ChecklistSerializer
-from django.db import models
 
 
 class JSONResponseMixin(object):
@@ -817,26 +816,27 @@ class CertifyingOrganisationJson(BaseDatatableView):
             order_field = 'updated_at'
         else:
             return super(CertifyingOrganisationJson, self).ordering(qs)
-        
+
         if order_dir == 'desc':
             order_field = '-' + order_field
 
         return qs.order_by(order_field)
 
-    def get_initial_queryset(self):    # Subquery to get the earliest history date (creation_date)
-        earliest_history = CertifyingOrganisation.history.filter(
+    def get_initial_queryset(self):
+        # Subquery to get the earliest history date (creation_date)
+        earliest = CertifyingOrganisation.history.filter(
             id=OuterRef('id')
         ).order_by('history_date').values('history_date')[:1]
 
         # Subquery to get the latest history date (update_date)
-        latest_history = CertifyingOrganisation.history.filter(
+        latest = CertifyingOrganisation.history.filter(
             id=OuterRef('id')
         ).order_by('-history_date').values('history_date')[:1]
 
         # Annotate the queryset with creation_date and update_date
         queryset = CertifyingOrganisation.objects.annotate(
-            created_at=Subquery(earliest_history),
-            updated_at=Subquery(latest_history)
+            created_at=Subquery(earliest),
+            updated_at=Subquery(latest)
         )
         return queryset
 
