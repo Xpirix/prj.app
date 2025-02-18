@@ -10,7 +10,7 @@ from django.core.mail import send_mail
 from django.utils.html import escape
 from django.urls import reverse
 from django.shortcuts import get_list_or_404
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, OuterRef, Subquery
 from django.http import HttpResponse, request
 from django.views.generic import (
     ListView,
@@ -40,6 +40,7 @@ from ..models import (
 from ..forms import CertifyingOrganisationForm
 from certification.utilities import check_slug
 from ..serializers.checklist_serializer import ChecklistSerializer
+from django.db import models
 
 
 class JSONResponseMixin(object):
@@ -806,8 +807,38 @@ class CertifyingOrganisationJson(BaseDatatableView):
     order_columns = ['name']
     max_display_length = 100
 
-    def get_initial_queryset(self):
-        return CertifyingOrganisation.objects.all()
+    def ordering(self, qs):
+        order_column = self.request.GET.get('order[0][column]', None)
+        order_dir = self.request.GET.get('order[0][dir]', 'asc')
+
+        if order_column == '1':  # creation_date column index
+            order_field = 'created_at'
+        elif order_column == '2':  # update_date column index
+            order_field = 'updated_at'
+        else:
+            return super(CertifyingOrganisationJson, self).ordering(qs)
+        
+        if order_dir == 'desc':
+            order_field = '-' + order_field
+
+        return qs.order_by(order_field)
+
+    def get_initial_queryset(self):    # Subquery to get the earliest history date (creation_date)
+        earliest_history = CertifyingOrganisation.history.filter(
+            id=OuterRef('id')
+        ).order_by('history_date').values('history_date')[:1]
+
+        # Subquery to get the latest history date (update_date)
+        latest_history = CertifyingOrganisation.history.filter(
+            id=OuterRef('id')
+        ).order_by('-history_date').values('history_date')[:1]
+
+        # Annotate the queryset with creation_date and update_date
+        queryset = CertifyingOrganisation.objects.annotate(
+            created_at=Subquery(earliest_history),
+            updated_at=Subquery(latest_history)
+        )
+        return queryset
 
     def render_column(self, row, column):
         # We want to render user as a custom column
