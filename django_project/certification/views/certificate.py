@@ -751,44 +751,53 @@ def generate_all_certificate(request, **kwargs):
         raise Http404
 
     course_attendees = CourseAttendee.objects.filter(course=course)
-    for course_attendee in course_attendees:
 
-        try:
-            certificate = Certificate.objects.get(
-                author=request.user,
-                attendee=course_attendee.attendee,
-                course=course,
-            )
-        except Certificate.DoesNotExist:
+    if request.method == 'POST':
+        for course_attendee in course_attendees:
 
-            remaining_credits = \
-                certifying_organisation.organisation_credits - \
-                certifying_organisation.project.certificate_credit
+            try:
+                certificate = Certificate.objects.get(
+                    author=request.user,
+                    attendee=course_attendee.attendee,
+                    course=course,
+                )
+            except Certificate.DoesNotExist:
 
-            is_paid = False
-            if remaining_credits >= 0:
-                is_paid = True
+                remaining_credits = \
+                    certifying_organisation.organisation_credits - \
+                    certifying_organisation.project.certificate_credit
 
-            certificate = Certificate.objects.create(
-                author=request.user,
-                attendee=course_attendee.attendee,
-                course=course,
-                is_paid=is_paid
-            )
+                is_paid = False
+                if remaining_credits >= 0:
+                    is_paid = True
 
-            if certificate and (remaining_credits >= 0):
-                certifying_organisation.organisation_credits = \
-                    remaining_credits
-                certifying_organisation.save()
+                certificate = Certificate.objects.create(
+                    author=request.user,
+                    attendee=course_attendee.attendee,
+                    course=course,
+                    is_paid=is_paid
+                )
 
-    url = reverse('course-detail', kwargs={
-        'project_slug': project_slug,
-        'organisation_slug': organisation_slug,
-        'slug': course_slug
-    })
+                if certificate and (remaining_credits >= 0):
+                    certifying_organisation.organisation_credits = \
+                        remaining_credits
+                    certifying_organisation.save()
 
-    messages.success(request, 'All certificates are generated', 'generate')
-    return HttpResponseRedirect(url)
+        url = reverse('course-detail', kwargs={
+            'project_slug': project_slug,
+            'organisation_slug': organisation_slug,
+            'slug': course_slug
+        })
+
+        messages.success(request, 'All certificates are generated', 'generate')
+        return HttpResponseRedirect(url)
+    return render(
+        request, 'certificate/generate_all_certificate.html',
+        context={
+            'course': course,
+            'attendees': course_attendees,
+        }
+    )
 
 
 def regenerate_all_certificate(request, **kwargs):
